@@ -35,7 +35,7 @@ export class RoomService {
         }
 
         async listUsersPositionByLink(link: string){
-            this.logger.debug(`listusersPositionByLink - ${link}`);
+            this.logger.debug(`listUsersPositionByLink - ${link}`);
 
             const meet = await this._getMeet(link);
             return await this.positionModel.find({meet});
