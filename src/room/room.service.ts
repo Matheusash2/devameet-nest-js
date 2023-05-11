@@ -41,14 +41,14 @@ export class RoomService {
             return await this.positionModel.find({meet});
         }
 
-        async deleteUsersPositionByLink(clientId: string){
-            this.logger.debug(`deleteUsersPositionByLink - ${clientId}`);
+        async deleteUsersPosition(clientId: string){
+            this.logger.debug(`deleteUsersPosition - ${clientId}`);
 
             return await this.positionModel.deleteMany({clientId});
         }
 
         async updateUserPosition(clientId: string, dto: UpdateUserPositionDto){
-            this.logger.debug(`updateUserPosition - ${dto.link}`);
+            this.logger.debug(`updateUserPositionByLink - ${dto.link}`);
 
             const meet = await this._getMeet(dto.link);
             const user = await this.userService.getUserById(dto.userId);
