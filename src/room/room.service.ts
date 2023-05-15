@@ -48,12 +48,12 @@ export class RoomService {
             return usersPositions;
           }
 
-        async getUserPosition (user: string, link: string){
-            this.logger.debug(`getUserPosition - ${user} - ${link}`);
+        async getUserPosition (userId: string, link: string){
+            this.logger.debug(`getUserPosition - ${userId} - ${link}`);
 
             const meet = await this._getMeet(link);
             // Obtenha a posição do usuário
-            const position = await this.positionModel.findOne({user, meet});
+            const position = await this.positionModel.findOne({user: userId, meet});
 
             return position;
         }

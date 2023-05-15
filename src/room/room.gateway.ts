@@ -60,26 +60,28 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect{
     const {link, userId} = payload;
 
     const existingOnSocket = this.activeSockets.find(
-      socket => socket.room === link && socket.id === client.id);
+      (socket) => socket.room === link && socket.id === client.id);
 
       if(!existingOnSocket){
         this.activeSockets.push({room: link, id: client.id, userId});
         
         // Verificar se o usuário já tem uma posição registrada para a sala
-        const existingPosition = await this.positionModel.findOne({user: userId, meet: link});
+        const existingPosition = await this.service.getUserPosition(userId, link);
 
         if(existingPosition){
-          //Caso o usuário já tenha uma posição registrada, usa essa posição
-        const dto = {
-          link,
-          userId,
-          x: existingPosition.x,
-          y: existingPosition.y,
-          orientation: existingPosition.orientation
+          const { x, y, orientation } = existingPosition; // Obtenha os valores da posição existente
+
+      const dto = {
+        link,
+        userId,
+        x,
+        y,
+        orientation,
       } as UpdateUserPositionDto;
 
-        // Armazena a posição atual do usuário
-        await this.service.updateUserPosition(client.id, dto); 
+      // Atualize a posição atual do usuário
+      await this.service.updateUserPosition(client.id, dto);
+          
         }else{
           // Caso contrário, gera uma nova posição aleatória
           const positionX = Math.floor(Math.random() * 9); // Valores de 0 a 8
