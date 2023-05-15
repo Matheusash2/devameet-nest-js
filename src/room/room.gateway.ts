@@ -5,6 +5,11 @@ import { Server, Socket } from 'socket.io';
 import { JoinRoomDto } from './dtos/joinroom.dto';
 import { UpdateUserPositionDto } from './dtos/updateposition.dto';
 import { ToglMuteDto } from './dtos/toglMute.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Meet, MeetDocument } from 'src/meet/schemas/meet.schema';
+import { Position, PositionDocument } from './schemas/position.schema';
+
 
 type ActiveSocketType = {
   room: string;
@@ -14,17 +19,17 @@ type ActiveSocketType = {
 
 @WebSocketGateway({cors: true})
 export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect{
-
-  constructor(private readonly service: RoomService){
-
-  }
+  
+  constructor(private readonly service: RoomService,
+    @InjectModel(Meet.name) private readonly meetModel: Model<MeetDocument>,
+    @InjectModel(Position.name) private readonly positionModel: Model<PositionDocument>){}
 
   @WebSocketServer() wss: Server;
 
   private logger = new Logger(RoomGateway.name);
 
   private activeSockets: ActiveSocketType[] = [];
-
+  
   async handleDisconnect(client: any) {
     const existingOnSocket = this.activeSockets.find(
       socket => socket.id === client.id
@@ -32,11 +37,15 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect{
 
     if(!existingOnSocket) return;
 
+    // Recupera o documento Meet correspondente
+    const meet = await this.meetModel.findOne({ link: existingOnSocket.room });
+    
     this.activeSockets = this.activeSockets.filter(
       socket => socket.id !== client.id
     );
 
-    await this.service.deleteUsersPosition(client.id);
+    // Passa o documento Meet para o método deleteUsersPosition
+    await this.service.deleteUsersPosition(client.id, meet);
     client.broadcast.emit(`${existingOnSocket.room}-remove-user`, {socketId: client.id});
 
     this.logger.debug(`Cliente: ${client.id} disconnected`);
@@ -55,16 +64,38 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect{
 
       if(!existingOnSocket){
         this.activeSockets.push({room: link, id: client.id, userId});
+        
+        // Verificar se o usuário já tem uma posição registrada para a sala
+        const existingPosition = await this.positionModel.findOne({user: userId, meet: link});
 
+        if(existingPosition){
+          //Caso o usuário já tenha uma posição registrada, usa essa posição
         const dto = {
           link,
           userId,
-          x: 2,
-          y: 2,
+          x: existingPosition.x,
+          y: existingPosition.y,
+          orientation: existingPosition.orientation
+      } as UpdateUserPositionDto;
+
+        // Armazena a posição atual do usuário
+        await this.service.updateUserPosition(client.id, dto); 
+        }else{
+          // Caso contrário, gera uma nova posição aleatória
+          const positionX = Math.floor(Math.random() * 9); // Valores de 0 a 8
+          const positionY = Math.floor(Math.random() * 9); // Valores de 0 a 8
+          
+        const dto = {
+          link,
+          userId,
+          x: positionX,
+          y: positionY,
           orientation: 'down'
         } as UpdateUserPositionDto
-
+      
+        // Armazena a posição atual do usuário
         await this.service.updateUserPosition(client.id, dto);
+      }
         const users = await this.service.listUsersPositionByLink(link);
 
         this.wss.emit(`${link}-update-user-list`, {users});

@@ -34,18 +34,41 @@ export class RoomService {
             };
         }
 
-        async listUsersPositionByLink(link: string){
+        async listUsersPositionByLink(link: string) {
             this.logger.debug(`listUsersPositionByLink - ${link}`);
+          
+            const meet = await this._getMeet(link);
+          
+            // Obtenha apenas as posições associadas a usuários logados (clientId não é null)
+            const usersPositions = await this.positionModel.find({
+              meet,
+              clientId: { $ne: null },
+            });
+          
+            return usersPositions;
+          }
+
+        async getUserPosition (user: string, link: string){
+            this.logger.debug(`getUserPosition - ${user} - ${link}`);
 
             const meet = await this._getMeet(link);
-            return await this.positionModel.find({meet});
+            // Obtenha a posição do usuário
+            const position = await this.positionModel.findOne({user, meet});
+
+            return position;
         }
 
-        async deleteUsersPosition(clientId: string){
+        async deleteUsersPosition(clientId: string, meet: MeetDocument) {
             this.logger.debug(`deleteUsersPosition - ${clientId}`);
-
-            return await this.positionModel.deleteMany({clientId});
-        }
+          
+            // Verifica se a sala foi excluída
+            const deletedMeet = await this.meetModel.findOne({ _id: meet._id });
+            if (!deletedMeet) {
+              await this.positionModel.deleteMany({ clientId });
+            } else {
+              await this.positionModel.updateMany({ clientId }, { $set: { clientId: null } });
+            }
+          }
 
         async updateUserPosition(clientId: string, dto: UpdateUserPositionDto){
             this.logger.debug(`updateUserPositionByLink - ${dto.link}`);
