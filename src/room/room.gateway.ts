@@ -66,34 +66,38 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect{
         this.activeSockets.push({room: link, id: client.id, userId});
         
         // Verificar se o usuário já tem uma posição registrada para a sala
-        const existingPosition = await this.service.getUserPosition(userId, link);
+        const existingPosition = await this.service.getUserPosition(
+          userId, 
+          link
+          );
 
-        if(existingPosition){
-          const { x, y, orientation } = existingPosition; // Obtenha os valores da posição existente
+      if(existingPosition){
+        // Obtenha os valores da posição existente
+        const { x, y, orientation } = existingPosition; 
 
-      const dto = {
-        link,
-        userId,
-        x,
-        y,
-        orientation,
-      } as UpdateUserPositionDto;
+          const dto = {
+            link,
+            userId,
+            x,
+            y,
+            orientation,
+          } as UpdateUserPositionDto;
 
-      // Atualize a posição atual do usuário
-      await this.service.updateUserPosition(client.id, dto);
+        // Atualize a posição atual do usuário
+        await this.service.updateUserPosition(client.id, dto);
           
-        }else{
-          // Caso contrário, gera uma nova posição aleatória
-          const positionX = Math.floor(Math.random() * 9); // Valores de 0 a 8
-          const positionY = Math.floor(Math.random() * 9); // Valores de 0 a 8
+      }else{
+        // Caso contrário, gera uma nova posição aleatória
+        const positionX = Math.floor(Math.random() * 9); // Valores de 0 a 8
+        const positionY = Math.floor(Math.random() * 9); // Valores de 0 a 8
           
-        const dto = {
-          link,
-          userId,
-          x: positionX,
-          y: positionY,
-          orientation: 'down'
-        } as UpdateUserPositionDto
+          const dto = {
+            link,
+            userId,
+            x: positionX,
+            y: positionY,
+            orientation: 'down'
+          } as UpdateUserPositionDto
       
         // Armazena a posição atual do usuário
         await this.service.updateUserPosition(client.id, dto);
