@@ -25,10 +25,10 @@ export class MeetController {
     }
 
     @Get(':id')
-    async getMeetbyId(@Request() req, @Param() params){
+    async getMeetById(@Request() req, @Param() params){
         const {userId} = req?.user;
         const {id} = params;
-        await this.service.getMeetById(id, userId);
+        return await this.service.getMeetById(id, userId);
     }
 
     @Post()
