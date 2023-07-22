@@ -28,7 +28,7 @@ export class UpdateMeetObjectDto {
     y: number;
 
     @IsNumber({}, {message: MeetMessagesHelper.UPDATE_ZINDEX_NOT_VALID})
-    zIndex: number;
+    zindex: number;
 
     @IsString({message: MeetMessagesHelper.UPDATE_ORIENTATION_NOT_VALID})
     orientation: string
