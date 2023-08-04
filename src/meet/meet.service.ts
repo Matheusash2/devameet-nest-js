@@ -70,7 +70,7 @@ export class MeetService {
         meet.color = dto.color;
         await this.model.findByIdAndUpdate({_id: meetId}, meet);
 
-        await this.model.deleteMany({meet});
+        await this.objectModel.deleteMany({meet});
 
         let objectPayload;
 
