@@ -7,6 +7,8 @@ import { JwtAuthGuard } from './auth/guards/jwt.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { MeetModule } from './meet/meet.module';
 import { RoomModule } from './room/room.module';
+import { BannedModule } from './banned/banned.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -15,7 +17,9 @@ import { RoomModule } from './room/room.module';
     AuthModule,
   UserModule,
   MeetModule,
-  RoomModule],
+  RoomModule,
+  BannedModule,
+  ChatModule],
   controllers: [],
   providers: [
     {provide: APP_GUARD, useClass: JwtAuthGuard}

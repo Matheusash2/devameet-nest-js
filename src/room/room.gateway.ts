@@ -1,4 +1,4 @@
-import { SubscribeMessage, WebSocketGateway, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, WebSocketServer } from '@nestjs/websockets';
+import { SubscribeMessage, WebSocketGateway, OnGatewayInit, OnGatewayDisconnect, WebSocketServer } from '@nestjs/websockets';
 import { RoomService } from './room.service';
 import { Logger } from '@nestjs/common'
 import { Server, Socket } from 'socket.io';
@@ -9,6 +9,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Meet, MeetDocument } from 'src/meet/schemas/meet.schema';
 import { Position, PositionDocument } from './schemas/position.schema';
+import { Banned, BannedDocument } from 'src/banned/schemas/banned.schema';
+import { RemoveUserRoomDto } from './dtos/removeUser.dto';
 
 
 type ActiveSocketType = {
@@ -22,7 +24,8 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect{
   
   constructor(private readonly service: RoomService,
     @InjectModel(Meet.name) private readonly meetModel: Model<MeetDocument>,
-    @InjectModel(Position.name) private readonly positionModel: Model<PositionDocument>){}
+    @InjectModel(Position.name) private readonly positionModel: Model<PositionDocument>,
+    @InjectModel(Banned.name) private readonly bannedModel: Model<BannedDocument>){}
 
   @WebSocketServer() wss: Server;
 
@@ -61,6 +64,16 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect{
 
     const existingOnSocket = this.activeSockets.find(
       (socket) => socket.room === link && socket.id === client.id);
+
+      const meet = await this.meetModel.findOne({link});
+
+      const banUser = await this.bannedModel.findOne({userBannedId: userId, meet})
+
+      if(banUser){
+        client.emit('ban-message', { message: 'Você está banido desta sala.' });
+        client.disconnect(true);
+        return;
+      }
 
       if(!existingOnSocket){
         this.activeSockets.push({room: link, id: client.id, userId});
@@ -154,5 +167,30 @@ export class RoomGateway implements OnGatewayInit, OnGatewayDisconnect{
       socket: client.id
     });
   }
- 
+
+  @SubscribeMessage('ban-user')
+  async banUser(client: Socket, payload: RemoveUserRoomDto) {
+    const {clientId, userId, meetId} = payload;
+    console.log("payload:",  payload);
+    console.log("meetId:",  meetId);
+    console.log("clientId:",  clientId);
+    console.log("userId:",  userId);
+      const meet =  await this.meetModel.findOne({_id: meetId});
+    console.log("Id:",  meet);
+
+      const banUser = await this.bannedModel.findOne({userBannedId: userId, meet: meet._id})
+      if(banUser){
+        await this.service.deleteUsersPosition(clientId, meet);
+        client.emit('ban-message', { message: 'Você está banido desta sala.' });
+        client.broadcast.emit(`${meet.link}-ban-message`, { userId: clientId, message: 'Usuário banido.' });
+        this.wss.emit(`${meet.link}-ban-message`, { userId: clientId, message: 'Usuário banido.' });
+
+        //client.disconnect(true);
+        this.wss.emit(`${meet.link}-remove-user`, { socketId: clientId });
+        const users = await this.service.listUsersPositionByLink(meet.link);
+        this.wss.emit(`${meet.link}-update-user-list`, {users});
+        client.broadcast.emit(`${meet.name}-add-user`, { user: clientId });
+        return;
+      }
+  }
 }

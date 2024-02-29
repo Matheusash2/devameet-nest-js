@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsNumber, IsString, Max, Min, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsString, Max, Min, ValidateNested } from "class-validator";
 import { CreateMeetDto } from "./createmeet.dto";
 import { MeetMessagesHelper } from "../helpers/meetmessages.helper";
 import { Type } from "class-transformer";
@@ -32,4 +32,13 @@ export class UpdateMeetObjectDto {
 
     @IsString({message: MeetMessagesHelper.UPDATE_ORIENTATION_NOT_VALID})
     orientation: string
+
+    @IsBoolean({message: MeetMessagesHelper.UPDATE_WALKABLE_NOT_VALID})
+    walkable: boolean
+
+    @IsNumber({}, {message: MeetMessagesHelper.UPDATE_WIDTH_AND_HEIGHT_NOT_VALID})
+    width: number
+
+    @IsNumber({}, {message: MeetMessagesHelper.UPDATE_WIDTH_AND_HEIGHT_NOT_VALID})
+    height: number
 }

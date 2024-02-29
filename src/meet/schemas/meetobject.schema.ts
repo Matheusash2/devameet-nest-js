@@ -24,6 +24,15 @@ export class MeetObject{
 
     @Prop()
     orientation: string;
+
+    @Prop({default: false})
+    walkable: boolean;
+
+    @Prop({required: true})
+    width: number;
+
+    @Prop({required: true})
+    height: number;
 }
 
 export const MeetObjectSchema = SchemaFactory.createForClass(MeetObject);

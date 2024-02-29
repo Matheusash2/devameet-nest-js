@@ -27,6 +27,7 @@ export class RoomService {
         const objects = await this.objectModel.find({meet});
 
         return{
+            _id: meet._id,
             link,
             name: meet.name,
             color: meet.color,

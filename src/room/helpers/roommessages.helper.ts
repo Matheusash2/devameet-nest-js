@@ -4,4 +4,6 @@ export const RoomMessagesHelper = {
     JOIN_USER_NOT_VALID: "Usuário informado inválido",
     JOIN_LINK_NOT_VALID: "Link informado inválido",
     MUTE_NOT_VALID: "Valor para mudo inválido",
+    BANNED_USER: "Usuário banido",
+    MEET_NOT_VALID: "Meet informado inválido",
 }
